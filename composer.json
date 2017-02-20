@@ -1,0 +1,42 @@
+{
+  "name": "jepsonwu/php-mysqli",
+  "description": "Php mysqli cache driver",
+  "keywords": [
+    "mysqli",
+    "jepson",
+    "cache"
+  ],
+  "homepage": "https://github.com/jepsonwu/php-mysqli",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "jepsonwu",
+      "email": "wjp13671142513@163.com"
+    }
+  ],
+  "require": {
+    "php": "^5.6 || ^7.0",
+    "joshcam/mysqli-database-class": ">=v2.6",
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^5.5",
+    "jakub-onderka/php-parallel-lint": "0.9"
+  },
+  "autoload": {
+    "psr-4": {
+      "Jepsonwu\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Jepsonwu\\": "tests"
+    }
+  },
+  "scripts": {
+    "test": [
+      "parallel-lint . --exclude vendor",
+      "phpunit"
+    ]
+  }
+}
