@@ -1,5 +1,5 @@
 <?php
-namespace Jepsonwu\database\cache;
+namespace Jepsonwu\mysqli\cache;
 /**
  * Created by PhpStorm.
  * User: jepsonwu

@@ -2,8 +2,8 @@
 
 <phpunit bootstrap="vendor/autoload.php" colors="true">
     <testsuites>
-        <testsuite name="Database Test Suite">
-            <directory>tests/database/</directory>
+        <testsuite name="mysqli driver Test Suite">
+            <directory>tests/mysqli/</directory>
         </testsuite>
     </testsuites>
 

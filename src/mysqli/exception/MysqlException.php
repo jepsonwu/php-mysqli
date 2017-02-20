@@ -1,5 +1,5 @@
 <?php
-namespace Jepsonwu\database\exception;
+namespace Jepsonwu\mysqli\exception;
 /**
  * Created by PhpStorm.
  * User: jepsonwu

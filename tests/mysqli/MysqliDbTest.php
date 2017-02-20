@@ -1,7 +1,6 @@
 <?php
-namespace Jepsonwu\database;
+namespace Jepsonwu\mysqli;
 
-use Jepsonwu\database\mysql\MysqliCacheDb;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,14 +11,14 @@ use PHPUnit\Framework\TestCase;
  * Date: 2017/2/14
  * Time: 16:56
  */
-class MysqliCacheDbTest extends TestCase
+class MysqliDbTest extends TestCase
 {
     /**
-     * @return MysqliCacheDb
+     * @return MysqliDb
      */
     public function testDb()
     {
-        $db = new MysqliCacheDb("10.10.106.218", "root", "tortdh_gogo888!", "inchat_user", 3306);
+        $db = new MysqliDb("10.10.106.218", "root", "tortdh_gogo888!", "inchat_user", 3306);
         $db->configCache([
             "memcached", "11211"
         ])->configTable("user", "id")->registerFilterInsertFunc([$this, "filterInsert"]);
@@ -59,10 +58,10 @@ class MysqliCacheDbTest extends TestCase
 
     /**
      * @depends testDb
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      * @return bool
      */
-    public function testInsert(MysqliCacheDb $db)
+    public function testInsert(MysqliDb $db)
     {
         $data = [
             "token" => md5(microtime(true)),
@@ -85,9 +84,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchByPrimaryCache($primary, MysqliCacheDb $db)
+    public function testFetchByPrimaryCache($primary, MysqliDb $db)
     {
         $result = $db->fetchByPrimaryCache($primary);
         $this->assertTrue(isset($result['id']) && $result['id'] == $primary, "fetch by primary cache failed");
@@ -97,9 +96,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testDisableCache($primary, MysqliCacheDb $db)
+    public function testDisableCache($primary, MysqliDb $db)
     {
         $db->disableCache();
         $result = $db->fetchByPrimaryCache($primary);
@@ -116,9 +115,9 @@ class MysqliCacheDbTest extends TestCase
 
     /**
      * @depends testDb
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testUpdate(MysqliCacheDb $db)
+    public function testUpdate(MysqliDb $db)
     {
         $result = $db->update("user", ["city" => "shanghai"]);
         $this->assertTrue($result === false, "update must return false");
@@ -128,9 +127,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testUpdateByPrimaryCache($primary, MysqliCacheDb $db)
+    public function testUpdateByPrimaryCache($primary, MysqliDb $db)
     {
         $result = $db->updateByPrimaryCache($primary, ["city" => "shanghai"]);
         $this->assertTrue($result == true, "update by primary cache failed");
@@ -140,9 +139,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchOneByCache($primary, MysqliCacheDb $db)
+    public function testFetchOneByCache($primary, MysqliDb $db)
     {
         $db->where("id", $primary);
         $result = $db->fetchOneByCache();
@@ -155,9 +154,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testUpdateByCache($primary, MysqliCacheDb $db)
+    public function testUpdateByCache($primary, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), $primary);
         $result = $db->updateByCache(["city" => "hangzhou"]);
@@ -168,9 +167,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchOneByCacheUpdate($primary, MysqliCacheDb $db)
+    public function testFetchOneByCacheUpdate($primary, MysqliDb $db)
     {
         $db->where("id", $primary);
         $result = $db->column("city")->fetchOneByCache();
@@ -182,9 +181,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testIncrease($primary, MysqliCacheDb $db)
+    public function testIncrease($primary, MysqliDb $db)
     {
         $db->where("id", $primary);
         $result = $db->increase($primary, "personal_tag");
@@ -195,9 +194,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testIncreaseFetch($primary, MysqliCacheDb $db)
+    public function testIncreaseFetch($primary, MysqliDb $db)
     {
         $result = $db->fetchByPrimaryCache($primary);
         $this->assertTrue($result && $result['personal_tag'] == 2, "increase and fetch failed");
@@ -207,9 +206,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testDecrease($primary, MysqliCacheDb $db)
+    public function testDecrease($primary, MysqliDb $db)
     {
         $db->where("id", $primary);
         $result = $db->decrease($primary, "personal_tag");
@@ -220,9 +219,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testDecreaseFetch($primary, MysqliCacheDb $db)
+    public function testDecreaseFetch($primary, MysqliDb $db)
     {
         $result = $db->fetchByPrimaryCache($primary);
         $this->assertTrue($result && $result['personal_tag'] == 1, "decrease and fetch failed");
@@ -230,10 +229,10 @@ class MysqliCacheDbTest extends TestCase
 
     /**
      * @depends testDb
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      * @return bool
      */
-    public function testInsertAgain(MysqliCacheDb $db)
+    public function testInsertAgain(MysqliDb $db)
     {
         $data = [
             "token" => md5(microtime(true)),
@@ -257,9 +256,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchByPrimaryArrCache($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testFetchByPrimaryArrCache($primary, $primaryAgain, MysqliDb $db)
     {
         $result = $db->fetchByPrimaryArrCache([$primary, $primaryAgain]);
         $this->assertTrue($result && $result[0]['id'] == $primary && $result[1]['id'] == $primaryAgain, "fetch by primary arr cache failed");
@@ -271,9 +270,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchPairsByPrimaryArrCache($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testFetchPairsByPrimaryArrCache($primary, $primaryAgain, MysqliDb $db)
     {
         $result = $db->column("id,gender")->fetchPairsByPrimaryArrCache([$primary, $primaryAgain]);
         $this->assertTrue($result && key($result) == $primary && next($result) && key($result) == $primaryAgain, "fetch pairs by primary arr cache failed");
@@ -285,9 +284,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchAssocByPrimaryArrCache($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testFetchAssocByPrimaryArrCache($primary, $primaryAgain, MysqliDb $db)
     {
         $result = $db->fetchAssocByPrimaryArrCache([$primary, $primaryAgain]);
         $this->assertTrue($result && key($result) == $primary && $result[$primary]["id"] == $primary, "fetch assoc by primary arr cache failed");
@@ -299,9 +298,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchAllByCache($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testFetchAllByCache($primary, $primaryAgain, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), [$primary, $primaryAgain], "in");
         $result = $db->fetchAllByCache();
@@ -329,9 +328,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchPairsByCache($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testFetchPairsByCache($primary, $primaryAgain, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), [$primary, $primaryAgain], "in");
         $result = $db->column("id,gender")->fetchPairsByCache();
@@ -344,9 +343,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testFetchAssocByCache($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testFetchAssocByCache($primary, $primaryAgain, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), [$primary, $primaryAgain], "in");
         $result = $db->fetchAssocByCache();
@@ -359,9 +358,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testCount($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testCount($primary, $primaryAgain, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), [$primary, $primaryAgain], "in");
         $result = $db->count();
@@ -374,9 +373,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testCountDistinct($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testCountDistinct($primary, $primaryAgain, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), [$primary, $primaryAgain], "in");
         $result = $db->countDistinct();
@@ -389,9 +388,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testCountDistinctColumn($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testCountDistinctColumn($primary, $primaryAgain, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), [$primary, $primaryAgain], "in");
         $result = $db->countDistinctColumn("gps");
@@ -400,9 +399,9 @@ class MysqliCacheDbTest extends TestCase
 
     /**
      * @depends testDb
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testRawQuery(MysqliCacheDb $db)
+    public function testRawQuery(MysqliDb $db)
     {
         $result = $db->rawQuery("");
         $this->assertTrue($result == false, "raw query must be return false");
@@ -414,9 +413,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testTransaction($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testTransaction($primary, $primaryAgain, MysqliDb $db)
     {
         $db->startTransaction();
         try {
@@ -449,9 +448,9 @@ class MysqliCacheDbTest extends TestCase
 
     /**
      * @depends testDb
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testDelete(MysqliCacheDb $db)
+    public function testDelete(MysqliDb $db)
     {
         $result = $db->delete("user", []);
         $this->assertTrue($result == false, "delete must be return false");
@@ -461,9 +460,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsert
      * @depends testDb
      * @param $primary
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testDeleteByPrimaryCache($primary, MysqliCacheDb $db)
+    public function testDeleteByPrimaryCache($primary, MysqliDb $db)
     {
         $result = $db->deleteByPrimaryCache($primary);
         $this->assertTrue($result, "delete by primary cache failed");
@@ -473,9 +472,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testInsertAgain
      * @depends testDb
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testDeleteByCache($primaryAgain, MysqliCacheDb $db)
+    public function testDeleteByCache($primaryAgain, MysqliDb $db)
     {
         $db->where($db->getPrimaryKey(), [$primaryAgain], "in");
         $result = $db->deleteByCache();
@@ -488,9 +487,9 @@ class MysqliCacheDbTest extends TestCase
      * @depends testDb
      * @param $primary
      * @param $primaryAgain
-     * @param MysqliCacheDb $db
+     * @param MysqliDb $db
      */
-    public function testDeleteFetch($primary, $primaryAgain, MysqliCacheDb $db)
+    public function testDeleteFetch($primary, $primaryAgain, MysqliDb $db)
     {
         $result = $db->fetchByPrimaryArrCache([$primary, $primaryAgain]);
         $this->assertTrue(empty($result), "delete fetch failed");

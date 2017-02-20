@@ -1,9 +1,9 @@
 <?php
-namespace Jepsonwu\database\mysql;
+namespace Jepsonwu\mysqli;
 
-use Jepsonwu\database\cache\Cache;
-use Jepsonwu\database\cache\MemcachedCache;
-use Jepsonwu\database\exception\MysqlException;
+use Jepsonwu\mysqli\cache\Cache;
+use Jepsonwu\mysqli\cache\MemcachedCache;
+use Jepsonwu\mysqli\exception\MysqlException;
 
 /**
  * support single data cache
@@ -18,7 +18,7 @@ use Jepsonwu\database\exception\MysqlException;
  * Date: 2017/2/6
  * Time: 16:29
  */
-class MysqliCacheDb extends \MysqliDb
+class MysqliDb extends \MysqliDb
 {
     /**
      * table
