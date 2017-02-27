@@ -1,4 +1,4 @@
-# PHP-Mysqli
+# PHP-Mysqli-Cache-Db
 
 ## Overview
 Php mysqli driver.
@@ -11,5 +11,5 @@ Php mysqli driver.
 
 ## Install
 ```
-composer require jepsonwu/php-mysqli
+composer require jepsonwu/php-mysqli:dev-master
 ```

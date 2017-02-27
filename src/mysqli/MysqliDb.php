@@ -55,6 +55,7 @@ class MysqliDb extends \MysqliDb
      * @var
      */
     private $filterInsertFunc;
+    private $filterUpdateFunc;
     private $filterShowFunc;
 
     public function configTable($tableName, $primaryKey)
@@ -112,6 +113,12 @@ class MysqliDb extends \MysqliDb
     public function registerFilterInsertFunc(callable $func)
     {
         $this->filterInsertFunc = $func;
+        return $this;
+    }
+
+    public function registerFilterUpdateFunc(callable $func)
+    {
+        $this->filterUpdateFunc = $func;
         return $this;
     }
 
@@ -422,6 +429,12 @@ class MysqliDb extends \MysqliDb
         return $data;
     }
 
+    protected function filterUpdate($data)
+    {
+        is_callable($this->filterUpdateFunc) && $data = call_user_func_array($this->filterUpdateFunc, [$data]);
+        return $data;
+    }
+
     public function insertData($insertData)
     {
         return parent::insert($this->getTableName(), $this->filterInsert($insertData));
@@ -450,7 +463,7 @@ class MysqliDb extends \MysqliDb
     public function updateByPrimaryCache($primary, $tableData)
     {
         $this->where($this->getPrimaryKey(), $primary);
-        $result = parent::update($this->getTableName(), $this->filterInsert($tableData));
+        $result = parent::update($this->getTableName(), $this->filterUpdate($tableData));
         if ($result && $this->enableCache) {
             if ($this->inTransaction)
                 $this->transactionDeleteCachePrimaryArr[] = $primary;
@@ -473,7 +486,7 @@ class MysqliDb extends \MysqliDb
                 }
             }
         } else {
-            $result = parent::update($this->getTableName(), $this->filterInsert($tableData), $this->paginate);
+            $result = parent::update($this->getTableName(), $this->filterUpdate($tableData), $this->paginate);
             $result && $affectRows = $this->count;
         }
 
