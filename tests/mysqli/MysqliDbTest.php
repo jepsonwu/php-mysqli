@@ -23,6 +23,7 @@ class MysqliDbTest extends TestCase
             "memcached", "11211"
         ])->configTable("user", "id")->registerFilterInsertFunc([$this, "filterInsert"]);
         $db->registerFilterShowFunc([$this, "filterShow"]);
+        $db->registerFilterUpdateFunc([$this, "filterInsert"]);
 
         return $db;
     }
@@ -49,9 +50,9 @@ class MysqliDbTest extends TestCase
             $data = [$data];
             $single = true;
         }
-        foreach ($data as &$item) {
-            isset($item['school']) && $item['school'] = substr($item['school'], 0, -6);
-        }
+//        foreach ($data as &$item) {
+//            isset($item['school']) && $item['school'] = substr($item['school'], 0, -6);
+//        }
 
         return $single ? current($data) : $data;
     }
@@ -90,6 +91,7 @@ class MysqliDbTest extends TestCase
     {
         $result = $db->fetchByPrimaryCache($primary);
         $this->assertTrue(isset($result['id']) && $result['id'] == $primary, "fetch by primary cache failed");
+        $this->assertTrue(isset($result['school']) && substr($result['school'], -6) == "filter", "filter insert failed");
     }
 
     /**
@@ -244,10 +246,10 @@ class MysqliDbTest extends TestCase
             "ip" => "10.10.105.31",
             "created_at" => time()
         ];
-        $last_id = $db->insertData($data);
-        $this->assertTrue($last_id !== false, "insert again data failed");
+        $insert_data = $db->insertData($data, true);
+        $this->assertTrue(isset($insert_data['id']), "insert again data failed");
 
-        return $last_id;
+        return $insert_data['id'];
     }
 
     /**

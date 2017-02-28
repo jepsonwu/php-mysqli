@@ -435,9 +435,13 @@ class MysqliDb extends \MysqliDb
         return $data;
     }
 
-    public function insertData($insertData)
+    public function insertData($insertData, $returnData = false)
     {
-        return parent::insert($this->getTableName(), $this->filterInsert($insertData));
+        $insertData = $this->filterInsert($insertData);
+        $last_id = parent::insert($this->getTableName(), $insertData);
+        !is_bool($last_id) && $insertData[$this->getPrimaryKey()] = $last_id;
+
+        return $returnData && !is_bool($last_id) ? $insertData : $last_id;
     }
 
     public function insertMultiData(array $multiInsertData, array $dataKeys = null)
@@ -445,9 +449,13 @@ class MysqliDb extends \MysqliDb
         return parent::insertMulti($this->getTableName(), $this->filterInsert($multiInsertData), $dataKeys);
     }
 
-    public function replaceData($insertData)
+    public function replaceData($insertData, $returnData = false)
     {
-        return parent::replace($this->getTableName(), $this->filterInsert($insertData));
+        $insertData = $this->filterInsert($insertData);
+        $last_id = parent::replace($this->getTableName(), $insertData);
+        !is_bool($last_id) && $insertData[$this->getPrimaryKey()] = $last_id;
+
+        return $returnData && !is_bool($last_id) ? $insertData : $last_id;
     }
 
     public function update($tableName, $tableData, $numRows = null)
