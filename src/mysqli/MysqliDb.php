@@ -12,6 +12,7 @@ use Jepsonwu\mysqli\exception\MysqlException;
  * support custom component,like "stat cache hit rate"
  * support register custom cache driver,like redis
  * support register data filter
+ * support master slave schema
  *
  * Created by PhpStorm.
  * User: jepsonwu
@@ -27,7 +28,7 @@ class MysqliDb extends \MysqliDb
     const SCHEMA_MASTER = "master";
     const SCHEMA_SLAVE = "slave";
     private $conns = [
-        self::SCHEMA_MASTER => null,
+        self::SCHEMA_MASTER => "",
         self::SCHEMA_SLAVE => []
     ];
     private $enableSlave = false;
@@ -73,7 +74,7 @@ class MysqliDb extends \MysqliDb
 
     public function __construct(array $config, $db, $charset = "utf8")
     {
-        !is_array(current($config)) && $config = [self::SCHEMA_MASTER => [$config]];
+        !is_array(current($config)) && $config = [self::SCHEMA_MASTER => $config];
         if (!isset($config[self::SCHEMA_MASTER]))
             throw new MysqlException("Mysql db config invalid");
 

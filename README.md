@@ -8,6 +8,7 @@ Php mysqli driver.
  * support custom component,like "stat cache hit rate"
  * support register custom cache driver,like redis
  * support register data filter
+ * support master slave schema
 
 ## Install
 ```

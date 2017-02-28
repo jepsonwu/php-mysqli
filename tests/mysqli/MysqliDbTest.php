@@ -18,7 +18,32 @@ class MysqliDbTest extends TestCase
      */
     public function testDb()
     {
-        $db = new MysqliDb("10.10.106.218", "root", "tortdh_gogo888!", "inchat_user", 3306);
+        $config = [
+            "host" => "10.10.106.218",
+            "username" => "root",
+            "password" => "tortdh_gogo888!",
+            "port" => "3306"
+        ];
+
+        $db = new MysqliDb($config, "inchat_user");
+        unset($db);
+
+        $config = [
+            "master" => [
+                "host" => "10.10.106.218",
+                "username" => "root",
+                "password" => "tortdh_gogo888!",
+                "port" => "3306"
+            ],
+            "slave" => [
+                "host" => "10.10.106.218",
+                "username" => "root",
+                "password" => "tortdh_gogo888!",
+                "port" => "3306"
+            ]
+        ];
+
+        $db = new MysqliDb($config, "inchat_user");
         $db->configCache([
             "memcached", "11211"
         ])->configTable("user", "id")->registerFilterInsertFunc([$this, "filterInsert"]);
