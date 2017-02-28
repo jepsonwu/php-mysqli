@@ -20,6 +20,19 @@ use Jepsonwu\mysqli\exception\MysqlException;
  */
 class MysqliDb extends \MysqliDb
 {
+
+    /**
+     * schema master multi slave
+     */
+    const SCHEMA_MASTER = "master";
+    const SCHEMA_SLAVE = "slave";
+    private $conns = [
+        self::SCHEMA_MASTER => null,
+        self::SCHEMA_SLAVE => []
+    ];
+    private $enableSlave = false;
+    private $readQuery = false;
+
     /**
      * table
      * @var
@@ -57,6 +70,42 @@ class MysqliDb extends \MysqliDb
     private $filterInsertFunc;
     private $filterUpdateFunc;
     private $filterShowFunc;
+
+    public function __construct(array $config, $db, $charset = "utf8")
+    {
+        !is_array(current($config)) && $config = [self::SCHEMA_MASTER => [$config]];
+        if (!isset($config[self::SCHEMA_MASTER]))
+            throw new MysqlException("Mysql db config invalid");
+
+        $this->db = $db;
+        $this->charset = $charset;
+        foreach ($config as $schema => $cfg) {
+            if (!isset($this->conns[$schema]))
+                continue;
+
+            $this->host = isset($cfg['host']) ? $cfg['host'] : null;
+            $this->username = isset($cfg['username']) ? $cfg['username'] : null;
+            $this->password = isset($cfg['password']) ? $cfg['password'] : null;
+            $this->port = isset($cfg['port']) ? $cfg['port'] : null;
+            $this->connect();
+
+            if ($schema == self::SCHEMA_MASTER) {
+                $this->conns[$schema] = $this->_mysqli;
+            } else {
+                $this->conns[$schema][] = $this->_mysqli;
+                $this->enableSlave = true;
+            }
+        }
+    }
+
+    public function mysqli()
+    {
+        if ($this->readQuery && $this->enableSlave) {
+            return $this->conns[self::SCHEMA_SLAVE][array_rand($this->conns[self::SCHEMA_SLAVE])];
+        }
+
+        return $this->conns[self::SCHEMA_MASTER];
+    }
 
     public function configTable($tableName, $primaryKey)
     {
@@ -240,12 +289,16 @@ class MysqliDb extends \MysqliDb
 
     public function fetchByPrimary($primary)
     {
+        $this->readQuery = true;
+
         $this->where($this->getPrimaryKey(), $primary);
         return $this->filterShow($this->fetchOne());
     }
 
     public function fetchByPrimaryCache($primary)
     {
+        $this->readQuery = true;
+
         if (!$this->enableCache)
             return $this->fetchByPrimary($primary);
 
@@ -264,6 +317,8 @@ class MysqliDb extends \MysqliDb
 
     public function fetchOne()
     {
+        $this->readQuery = true;
+
         $result = $this->getOne($this->getTableName(), $this->columns);
         $this->resetFilter();
         return empty($result) ? [] : $this->filterShow($result);
@@ -271,6 +326,8 @@ class MysqliDb extends \MysqliDb
 
     public function fetchOneByCache()
     {
+        $this->readQuery = true;
+
         if (!$this->enableCache)
             return $this->fetchOne();
 
@@ -283,6 +340,8 @@ class MysqliDb extends \MysqliDb
 
     public function fetchByPrimaryArr(array $primaryArr)
     {
+        $this->readQuery = true;
+
         $this->where($this->getPrimaryKey(), $primaryArr, "in");
         return $this->filterShow($this->fetchAll());
     }
@@ -294,6 +353,8 @@ class MysqliDb extends \MysqliDb
      */
     public function fetchByPrimaryArrCache(array $primaryArr)
     {
+        $this->readQuery = true;
+
         if (!$this->enableCache)
             return $this->fetchByPrimary($primaryArr);
 
@@ -309,6 +370,8 @@ class MysqliDb extends \MysqliDb
 
     public function fetchAll()
     {
+        $this->readQuery = true;
+
         $result = $this->get($this->getTableName(), $this->paginate, $this->columns);
         $this->resetFilter();
         return empty($result) ? [] : $this->filterShow($result);
@@ -316,6 +379,8 @@ class MysqliDb extends \MysqliDb
 
     public function fetchAllByCache()
     {
+        $this->readQuery = true;
+
         if (!$this->enableCache)
             return $this->fetchAll();
 
@@ -404,16 +469,22 @@ class MysqliDb extends \MysqliDb
 
     public function count()
     {
+        $this->readQuery = true;
+
         return (int)$this->getValue($this->getTableName(), "COUNT(1)");
     }
 
     public function countDistinct()
     {
+        $this->readQuery = true;
+
         return (int)$this->setQueryOption("DISTINCT")->getValue($this->getTableName(), "COUNT(1)");
     }
 
     public function countDistinctColumn($column)
     {
+        $this->readQuery = true;
+
         return (int)$this->getValue($this->getTableName(), "COUNT(DISTINCT {$column})");
     }
 
@@ -437,6 +508,8 @@ class MysqliDb extends \MysqliDb
 
     public function insertData($insertData, $returnData = false)
     {
+        $this->readQuery = false;
+
         $insertData = $this->filterInsert($insertData);
         $last_id = parent::insert($this->getTableName(), $insertData);
         !is_bool($last_id) && $insertData[$this->getPrimaryKey()] = $last_id;
@@ -446,11 +519,14 @@ class MysqliDb extends \MysqliDb
 
     public function insertMultiData(array $multiInsertData, array $dataKeys = null)
     {
+        $this->readQuery = false;
         return parent::insertMulti($this->getTableName(), $this->filterInsert($multiInsertData), $dataKeys);
     }
 
     public function replaceData($insertData, $returnData = false)
     {
+        $this->readQuery = false;
+
         $insertData = $this->filterInsert($insertData);
         $last_id = parent::replace($this->getTableName(), $insertData);
         !is_bool($last_id) && $insertData[$this->getPrimaryKey()] = $last_id;
@@ -470,6 +546,8 @@ class MysqliDb extends \MysqliDb
      */
     public function updateByPrimaryCache($primary, $tableData)
     {
+        $this->readQuery = false;
+
         $this->where($this->getPrimaryKey(), $primary);
         $result = parent::update($this->getTableName(), $this->filterUpdate($tableData));
         if ($result && $this->enableCache) {
@@ -484,7 +562,9 @@ class MysqliDb extends \MysqliDb
 
     public function updateByCache($tableData)
     {
+        $this->readQuery = false;
         $affectRows = 0;
+
         if ($this->enableCache) {
             $primaryArr = (array)$this->getValue($this->getTableName(), $this->getPrimaryKey(), $this->paginate);
             if ($primaryArr) {
@@ -521,6 +601,8 @@ class MysqliDb extends \MysqliDb
 
     public function deleteByPrimaryCache($primary)
     {
+        $this->readQuery = false;
+
         $this->where($this->getPrimaryKey(), $primary);
         $result = parent::delete($this->getTableName(), 1);
         if ($result && $this->enableCache) {
@@ -535,6 +617,7 @@ class MysqliDb extends \MysqliDb
 
     public function deleteByCache()
     {
+        $this->readQuery = false;
         $affectRows = 0;
 
         if ($this->enableCache) {
