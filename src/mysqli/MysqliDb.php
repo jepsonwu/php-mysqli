@@ -27,6 +27,7 @@ class MysqliDb extends \MysqliDb
      */
     const SCHEMA_MASTER = "master";
     const SCHEMA_SLAVE = "slave";
+    private $config;
     private $conns = [
         self::SCHEMA_MASTER => "",
         self::SCHEMA_SLAVE => []
@@ -80,9 +81,11 @@ class MysqliDb extends \MysqliDb
 
         $this->db = $db;
         $this->charset = $charset;
-        foreach ($config as $schema => $cfg) {
-            if (!isset($this->conns[$schema]))
+        foreach ($config as $schema => $cfg) {//todo support multi slave
+            if (!isset($this->conns[$schema])) {
+                unset($config[$schema]);
                 continue;
+            }
 
             $this->host = isset($cfg['host']) ? $cfg['host'] : null;
             $this->username = isset($cfg['username']) ? $cfg['username'] : null;
@@ -97,6 +100,7 @@ class MysqliDb extends \MysqliDb
                 $this->enableSlave = true;
             }
         }
+        $this->config = $config;
     }
 
     public function mysqli()
@@ -220,7 +224,8 @@ class MysqliDb extends \MysqliDb
 
     private function getCachePrefixKey()
     {
-        return md5($this->host . $this->port . $this->db . $this->getTableName());
+        $schema = $this->enableSlave ? self::SCHEMA_SLAVE : self::SCHEMA_MASTER;
+        return md5($this->config[$schema]["host"] . $this->config[$schema]["port"] . $this->db . $this->getTableName());
     }
 
     private function deleteCachePrefix()
