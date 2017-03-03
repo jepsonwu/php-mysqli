@@ -249,7 +249,7 @@ class MysqliDb extends \MysqliDb
         return md5($this->getCachePrefix() . "_" . $primary);
     }
 
-    private function deleteCache(array $primaryArr)
+    public function deleteCache(array $primaryArr)
     {
         return $this->getCache()->deleteMulti(array_map(function ($primary) {
             return $this->getCacheKey($primary);
