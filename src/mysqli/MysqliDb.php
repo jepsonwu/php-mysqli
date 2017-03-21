@@ -73,6 +73,9 @@ class MysqliDb extends \MysqliDb
     private $filterUpdateFunc;
     private $filterShowFunc;
 
+
+    private $isFetchAll = false;
+
     public function __construct(array $config, $db, $charset = "utf8")
     {
         !is_array(current($config)) && $config = [self::SCHEMA_MASTER => $config];
@@ -235,8 +238,8 @@ class MysqliDb extends \MysqliDb
 
     private function getCachePrefix()
     {
-        $prefix = "";
-        if (!$this->getCache()->get($this->getCachePrefixKey())) {
+        $prefix = $this->getCache()->get($this->getCachePrefixKey());
+        if (!$prefix) {
             $prefix = md5(microtime(true) . $this->getCachePrefixKey());
             $this->getCache()->set($this->getCachePrefixKey(), $prefix, 0);
         }
@@ -277,7 +280,7 @@ class MysqliDb extends \MysqliDb
 
         $result && $result = array_intersect_key($result, $columns);
 
-        $this->resetFilter();
+        $this->isFetchAll || $this->resetFilter();
         return $this->filterShow($result);
     }
 
@@ -285,6 +288,7 @@ class MysqliDb extends \MysqliDb
     {
         $this->columns = "*";
         $this->paginate = null;
+        $this->isFetchAll = false;
     }
 
     protected function filterShow($data)
@@ -360,6 +364,7 @@ class MysqliDb extends \MysqliDb
     public function fetchByPrimaryArrCache(array $primaryArr)
     {
         $this->readQuery = true;
+        $this->isFetchAll = true;
 
         if (!$this->enableCache)
             return $this->fetchByPrimary($primaryArr);
@@ -371,6 +376,7 @@ class MysqliDb extends \MysqliDb
             $detail && $result[] = $detail;
         }
 
+        $this->resetFilter();
         return $result;
     }
 
